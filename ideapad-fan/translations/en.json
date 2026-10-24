@@ -10,7 +10,8 @@
   "fan": {
     "0": "Quiet",
     "1": "Standard",
-    "4": "Max cooling"
+    "4": "Max cooling",
+    "full": "Full speed"
   },
   "profile": {
     "power-saver": "Power saver",
@@ -27,7 +28,8 @@
   "error": {
     "not_found": "No ideapad_acpi fan_mode found (not a Lenovo IdeaPad, or the ideapad_laptop module isn't loaded).",
     "write_failed": "Couldn't write {path}. Make it writable for your user (see the plugin's README: NixOS module or udev rule), then log in again.",
-    "profile_failed": "Couldn't set the power profile to {profile} (is power-profiles-daemon running?)."
+    "profile_failed": "Couldn't set the power profile to {profile} (is power-profiles-daemon running?).",
+    "full_speed_failed": "Couldn't switch ideapad-fan-full-speed.service (is your user in the ideapad-fan group? Log in again after adding it)."
   },
   "settings": {
     "show_label": {
@@ -41,6 +43,10 @@
     "restore_on_start": {
       "label": "Restore preset on start",
       "description": "Reapply the last chosen preset when Noctalia starts, since the firmware resets the fan mode on boot."
+    },
+    "full_speed_in_game": {
+      "label": "Full speed fans in game",
+      "description": "The game preset also pins the fans at full speed, instead of the firmware curve switching them on and off. Needs the NixOS module's fullSpeed option."
     }
   }
 }

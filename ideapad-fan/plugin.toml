@@ -1,6 +1,6 @@
 id           = "heprado/ideapad-fan"
 name         = "IdeaPad Fan Mode"
-version      = "2.0.0"
+version      = "2.1.0"
 plugin_api   = 24
 author       = "heprado"
 license      = "MIT"
@@ -28,6 +28,13 @@ key             = "restore_on_start"
 type            = "bool"
 label_key       = "settings.restore_on_start.label"
 description_key = "settings.restore_on_start.description"
+default         = true
+
+[[setting]]
+key             = "full_speed_in_game"
+type            = "bool"
+label_key       = "settings.full_speed_in_game.label"
+description_key = "settings.full_speed_in_game.description"
 default         = true
 
 [[widget]]

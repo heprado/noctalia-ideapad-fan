@@ -10,7 +10,8 @@
   "fan": {
     "0": "Silenciosa",
     "1": "Padrão",
-    "4": "Máxima"
+    "4": "Máxima",
+    "full": "Velocidade total"
   },
   "profile": {
     "power-saver": "Economia",
@@ -27,7 +28,8 @@
   "error": {
     "not_found": "fan_mode do ideapad_acpi não encontrado (não é um Lenovo IdeaPad, ou o módulo ideapad_laptop não está carregado).",
     "write_failed": "Não foi possível escrever em {path}. Libere a escrita para o seu usuário (veja o README do plugin: módulo NixOS ou regra udev) e entre na sessão de novo.",
-    "profile_failed": "Não foi possível mudar o perfil de energia para {profile} (o power-profiles-daemon está rodando?)."
+    "profile_failed": "Não foi possível mudar o perfil de energia para {profile} (o power-profiles-daemon está rodando?).",
+    "full_speed_failed": "Não foi possível trocar o ideapad-fan-full-speed.service (seu usuário está no grupo ideapad-fan? Entre na sessão de novo depois de adicioná-lo)."
   },
   "settings": {
     "show_label": {
@@ -41,6 +43,10 @@
     "restore_on_start": {
       "label": "Restaurar preset ao iniciar",
       "description": "Reaplica o último preset escolhido quando o Noctalia inicia, já que o firmware reseta o modo da ventoinha no boot."
+    },
+    "full_speed_in_game": {
+      "label": "Ventoinhas em velocidade total no jogo",
+      "description": "O preset jogo também fixa as ventoinhas na velocidade total, em vez da curva do firmware ficar ligando e desligando. Precisa da opção fullSpeed do módulo NixOS."
     }
   }
 }

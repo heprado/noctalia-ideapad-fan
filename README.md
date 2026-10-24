@@ -23,6 +23,19 @@ Reading `fan_mode` back isn't reliable on every model (an IdeaPad Gaming 3 15IMH
 so the widget shows the last preset it applied rather than parsing the attribute. `fan_mode` 2 ("dust cleaning", a
 short full-speed cycle) and 3 (rejected by the driver) aren't used.
 
+## Full speed fans (game preset)
+
+Even max cooling (`fan_mode` 4) follows the EC's own curve, so under a spiky load the fans keep switching on and off.
+Lenovo's GameZone WMI interface (GUID `887B54E3-DDDC-4B2C-8B88-68A26A8835D0`) has a `SetFanCooling` method (id `0x0D`)
+that pins both fans at full speed: on an IdeaPad Gaming 3 15IMH05 they go from ~2800/2600 to ~6000/5000 RPM and
+stay there. The NixOS module's `fullSpeed` option wraps it in a root unit, `ideapad-fan-full-speed.service` (through
+`acpi_call`), and a polkit rule lets the `ideapad-fan` group start and stop only that unit. When the unit exists, the
+game preset starts it and the other presets stop it (setting *Full speed fans in game*).
+
+Check the firmware first: in the decompiled DSDT, the GameZone device's `WMAA` method should handle `Arg1 == 0x0D`
+with an EC command (`NCMD (0x59, 0x77)` / `0x76` on the 15IMH05). If the method lives elsewhere than `\_SB.GZFD.WMAA`,
+set `fullSpeed.acpiMethod`.
+
 ## Layout
 
 ```
@@ -33,7 +46,7 @@ ideapad-fan/
   lib/presets.luau    the preset table and click cycle
   translations/       en, pt-BR
 nix/
-  nixos-module.nix    udev rule + group so fan_mode is writable without root
+  nixos-module.nix    udev rule + group so fan_mode is writable without root; optional full-speed unit
   hm-module.nix       installs the plugin into ~/.local/share/noctalia/plugins
 ```
 
@@ -58,6 +71,8 @@ imports = [ inputs.noctalia-ideapad-fan.nixosModules.default ];
 hardware.ideapad-fan = {
   enable = true;
   users = [ "alice" ];
+  # Optional, see "Full speed fans" above.
+  fullSpeed.enable = true;
 };
 
 # home-manager configuration

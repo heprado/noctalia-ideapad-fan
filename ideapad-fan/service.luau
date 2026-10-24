@@ -16,6 +16,11 @@ local DRIVER_DIR = "/sys/bus/platform/drivers/ideapad_acpi"
 local ATTR_NAME = "fan_mode"
 local POLL_MS = 5000
 
+-- Installed by the NixOS module's fullSpeed option; polkit lets the
+-- ideapad-fan group start and stop it.
+local FULL_SPEED_UNIT = "ideapad-fan-full-speed.service"
+local UNIT_DIRS = { "/etc/systemd/system", "/run/systemd/system", "/usr/lib/systemd/system", "/lib/systemd/system" }
+
 local snapshot = {
   available = false, -- fan_mode exists
   preset = nil, -- last preset applied (see lib/presets.luau on why not read back)
@@ -60,6 +65,33 @@ local function manageProfile()
   return noctalia.getConfig("manage_power_profile") ~= false and noctalia.commandExists("powerprofilesctl")
 end
 
+local function fullSpeedUnitExists()
+  for _, dir in ipairs(UNIT_DIRS) do
+    if noctalia.fileExists(dir .. "/" .. FULL_SPEED_UNIT) then
+      return true
+    end
+  end
+  return false
+end
+
+local hasFullSpeedUnit = fullSpeedUnitExists()
+
+local function manageFullSpeed()
+  return hasFullSpeedUnit and noctalia.getConfig("full_speed_in_game") ~= false and noctalia.commandExists("systemctl")
+end
+
+-- restart rather than start: if the EC dropped full speed (boot, resume)
+-- while the unit stayed active, start would be a no-op.
+local function setFullSpeed(on)
+  local verb = on and "restart" or "stop"
+  noctalia.runAsync({ "systemctl", "--no-ask-password", verb, FULL_SPEED_UNIT }, function(res)
+    if res.exitCode ~= 0 then
+      noctalia.log("systemctl " .. verb .. " " .. FULL_SPEED_UNIT .. " failed: " .. (res.stderr or ""))
+      noctalia.notifyError(noctalia.tr("title"), noctalia.tr("error.full_speed_failed"))
+    end
+  end)
+end
+
 local function savedPresetPath()
   local dir = noctalia.pluginDataDir()
   return dir and (dir .. "/preset") or nil
@@ -85,6 +117,7 @@ local function publish()
     preset = snapshot.preset,
     profile = snapshot.profile,
     managesProfile = manageProfile(),
+    fullSpeed = manageFullSpeed(),
     temp = snapshot.temp,
   })
 end
@@ -137,6 +170,11 @@ local function applyPreset(key, quiet)
   end
   snapshot.preset = key
   savePreset(key)
+
+  -- After fan_mode, so the firmware's mode change can't undo it.
+  if manageFullSpeed() then
+    setFullSpeed(p.fullSpeed == true)
+  end
 
   if manageProfile() then
     snapshot.profile = p.profile -- optimistic; confirmed by the next read

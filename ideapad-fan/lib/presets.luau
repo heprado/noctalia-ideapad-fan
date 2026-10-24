@@ -12,13 +12,18 @@
 -- 3 15IMH05) the EC reports its own codes (133, 3, ...) instead of the value
 -- written, so the plugin tracks the last preset it applied rather than
 -- parsing it.
+--
+-- fullSpeed: fan_mode 4 still follows the EC's curve, so under a spiky load
+-- the fan keeps switching on and off. Where the NixOS module's full-speed
+-- unit is installed, the game preset also starts it (both fans pinned at
+-- full speed) and the others stop it.
 
 local M = {}
 
 M.list = {
   { key = "quiet", fan = 0, profile = "power-saver", glyph = "leaf" },
   { key = "normal", fan = 1, profile = "balanced", glyph = "car-fan" },
-  { key = "game", fan = 4, profile = "performance", glyph = "device-gamepad-2" },
+  { key = "game", fan = 4, profile = "performance", glyph = "device-gamepad-2", fullSpeed = true },
 }
 
 -- Click order: normal -> game -> quiet -> normal.

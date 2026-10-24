@@ -58,7 +58,8 @@ local function render()
     { key = noctalia.tr("tooltip.preset"), value = presetLabel(p) },
   }
   if p then
-    table.insert(rows, { key = noctalia.tr("tooltip.fan"), value = noctalia.tr("fan." .. p.fan) })
+    local fan = (p.fullSpeed and snap.fullSpeed) and "full" or tostring(p.fan)
+    table.insert(rows, { key = noctalia.tr("tooltip.fan"), value = noctalia.tr("fan." .. fan) })
   end
   if snap.managesProfile and snap.profile then
     table.insert(rows, { key = noctalia.tr("tooltip.profile"), value = noctalia.tr("profile." .. snap.profile) })
