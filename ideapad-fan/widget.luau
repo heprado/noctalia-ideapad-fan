@@ -1,32 +1,50 @@
 --!nonstrict
 -- IdeaPad Fan Mode -- [[widget]] entry (bar).
 --
--- Shows the current fan mode; click steps to the next one (standard -> max
--- -> quiet), right click steps back. The writes happen in service.luau.
+-- Shows the current preset; click steps to the next one (normal -> game ->
+-- quiet), right click steps back. The changes happen in service.luau.
 
-local modes = require("./lib/modes.luau")
+local presets = require("./lib/presets.luau")
 
 local SNAPSHOT = "fan.snapshot"
 local COMMAND = "fan.command"
 
 local snap = noctalia.state.get(SNAPSHOT) or { available = false }
 
-local function modeLabel(m)
-  return m and noctalia.tr("mode." .. m.key) or noctalia.tr("mode.unknown")
+-- A preset whose power profile was changed from elsewhere is "custom".
+local function isCustom(p)
+  return p ~= nil and snap.managesProfile and snap.profile ~= nil and snap.profile ~= p.profile
+end
+
+local function presetLabel(p)
+  if not p then
+    return noctalia.tr("preset.unknown")
+  end
+  if isCustom(p) then
+    return noctalia.tr("preset.custom")
+  end
+  return noctalia.tr("preset." .. p.key)
 end
 
 local function render()
-  local m = modes.find(snap.mode)
+  local p = presets.find(snap.preset)
   local color = "on_surface"
   if not snap.available then
     color = "on_surface_variant"
-  elseif m and m.key == "max" then
+  elseif p and p.key == "game" and not isCustom(p) then
     color = "primary"
   end
 
-  local children = { ui.glyph({ name = m and m.glyph or "car-fan", color = color }) }
+  local glyph = "car-fan"
+  if p and not isCustom(p) then
+    glyph = p.glyph
+  elseif p then
+    glyph = "adjustments"
+  end
+
+  local children = { ui.glyph({ name = glyph, color = color }) }
   if snap.available and noctalia.getConfig("show_label") ~= false and not barWidget.isVertical() then
-    table.insert(children, ui.label({ text = modeLabel(m), color = color }))
+    table.insert(children, ui.label({ text = presetLabel(p), color = color }))
   end
 
   local container = barWidget.isVertical() and ui.column or ui.row
@@ -36,7 +54,15 @@ local function render()
     barWidget.setTooltip(noctalia.tr("error.not_found"))
     return
   end
-  local rows = { { key = noctalia.tr("tooltip.mode"), value = modeLabel(m) } }
+  local rows = {
+    { key = noctalia.tr("tooltip.preset"), value = presetLabel(p) },
+  }
+  if p then
+    table.insert(rows, { key = noctalia.tr("tooltip.fan"), value = noctalia.tr("fan." .. p.fan) })
+  end
+  if snap.managesProfile and snap.profile then
+    table.insert(rows, { key = noctalia.tr("tooltip.profile"), value = noctalia.tr("profile." .. snap.profile) })
+  end
   if snap.temp then
     table.insert(rows, { key = noctalia.tr("tooltip.cpu_temp"), value = snap.temp .. " °C" })
   end
@@ -52,7 +78,7 @@ local function step(direction)
   -- The nonce makes a repeated request a new value, so the watch fires.
   noctalia.state.set(COMMAND, {
     action = "set",
-    value = modes.next(snap.mode or 1, direction),
+    preset = presets.next(snap.preset or "normal", direction),
     nonce = os.clock() .. ":" .. math.random(),
   })
 end

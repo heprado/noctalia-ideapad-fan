@@ -1,28 +1,46 @@
 {
-  "title": "Fan mode",
-  "mode": {
+  "title": "Fan & power",
+  "preset": {
     "quiet": "Quiet",
-    "standard": "Standard",
-    "max": "Max cooling",
+    "normal": "Normal",
+    "game": "Game",
+    "custom": "Custom",
     "unknown": "Firmware"
   },
+  "fan": {
+    "0": "Quiet",
+    "1": "Standard",
+    "4": "Max cooling"
+  },
+  "profile": {
+    "power-saver": "Power saver",
+    "balanced": "Balanced",
+    "performance": "Performance"
+  },
   "tooltip": {
-    "mode": "Mode",
+    "preset": "Preset",
+    "fan": "Fan",
+    "profile": "Power profile",
     "cpu_temp": "CPU",
-    "hint": "Click: next mode · Right click: previous"
+    "hint": "Click: next preset · Right click: previous"
   },
   "error": {
     "not_found": "No ideapad_acpi fan_mode found (not a Lenovo IdeaPad, or the ideapad_laptop module isn't loaded).",
-    "write_failed": "Couldn't write {path}. Make it writable for your user (see the plugin's README: NixOS module or udev rule), then log in again."
+    "write_failed": "Couldn't write {path}. Make it writable for your user (see the plugin's README: NixOS module or udev rule), then log in again.",
+    "profile_failed": "Couldn't set the power profile to {profile} (is power-profiles-daemon running?)."
   },
   "settings": {
     "show_label": {
-      "label": "Show mode name",
-      "description": "Show the mode name next to the icon on horizontal bars."
+      "label": "Show preset name",
+      "description": "Show the preset name next to the icon on horizontal bars."
+    },
+    "manage_power_profile": {
+      "label": "Change the power profile",
+      "description": "Presets also switch the power-profiles-daemon profile (power saver / balanced / performance). Off: they only change the fan mode."
     },
     "restore_on_start": {
-      "label": "Restore mode on start",
-      "description": "Reapply the last chosen mode when Noctalia starts, since the firmware resets it on boot."
+      "label": "Restore preset on start",
+      "description": "Reapply the last chosen preset when Noctalia starts, since the firmware resets the fan mode on boot."
     }
   }
 }

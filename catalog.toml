@@ -1,12 +1,12 @@
 [[plugin]]
 id           = "heprado/ideapad-fan"
 name         = "IdeaPad Fan Mode"
-version      = "1.0.0"
+version      = "2.0.0"
 author       = "heprado"
 license      = "MIT"
 icon         = "car-fan"
-description  = "Bar widget that switches the Lenovo IdeaPad firmware fan mode (quiet / standard / max cooling) through the ideapad_acpi driver."
+description  = "Bar widget with quiet / normal / game presets for Lenovo IdeaPads: the firmware fan mode (ideapad_acpi) together with the power profile (power-profiles-daemon)."
 deprecated   = false
-plugin_api   = 3
-tags         = ["bar", "hardware", "system", "lenovo", "fan"]
+plugin_api   = 24
+tags         = ["bar", "hardware", "system", "lenovo", "fan", "power"]
 dependencies = []

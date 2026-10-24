@@ -1,13 +1,13 @@
 --!nonstrict
 -- IdeaPad Fan Mode -- [[service]] entry.
 --
--- Owns every write to fan_mode, so several bar widgets (one per output) never
--- race. Widgets ask for a mode through the COMMAND state key; the service
--- writes it, remembers it in the plugin data dir and publishes SNAPSHOT.
--- On start it reapplies the saved mode, since the firmware resets the fan
--- mode on boot.
+-- Owns every change, so several bar widgets (one per output) never race.
+-- Widgets ask for a preset through the COMMAND state key; the service writes
+-- fan_mode, sets the power profile, remembers the preset in the plugin data
+-- dir and publishes SNAPSHOT. On start it reapplies the saved preset, since
+-- the firmware resets the fan mode on boot.
 
-local modes = require("./lib/modes.luau")
+local presets = require("./lib/presets.luau")
 
 local SNAPSHOT = "fan.snapshot"
 local COMMAND = "fan.command"
@@ -18,7 +18,8 @@ local POLL_MS = 5000
 
 local snapshot = {
   available = false, -- fan_mode exists
-  mode = nil, -- last mode written (see lib/modes.luau on why not read back)
+  preset = nil, -- last preset applied (see lib/presets.luau on why not read back)
+  profile = nil, -- current power-profiles-daemon profile, nil if unknown
   temp = nil, -- CPU package temperature, °C
 }
 
@@ -55,23 +56,37 @@ end
 local attrPath = findAttr()
 local tempPath = findCpuTempPath()
 
-local function savedModePath()
+local function manageProfile()
+  return noctalia.getConfig("manage_power_profile") ~= false and noctalia.commandExists("powerprofilesctl")
+end
+
+local function savedPresetPath()
   local dir = noctalia.pluginDataDir()
-  return dir and (dir .. "/mode") or nil
+  return dir and (dir .. "/preset") or nil
 end
 
-local function loadSavedMode()
-  local path = savedModePath()
+local function loadSavedPreset()
+  local path = savedPresetPath()
   local contents = path and noctalia.readFile(path)
-  local value = contents and tonumber(noctalia.string.trim(contents))
-  return value and modes.find(value) and value or nil
+  local key = contents and noctalia.string.trim(contents)
+  return key and presets.find(key) and key or nil
 end
 
-local function saveMode(value)
-  local path = savedModePath()
+local function savePreset(key)
+  local path = savedPresetPath()
   if path then
-    noctalia.writeFile(path, tostring(value))
+    noctalia.writeFile(path, key)
   end
+end
+
+local function publish()
+  noctalia.state.set(SNAPSHOT, {
+    available = snapshot.available,
+    preset = snapshot.preset,
+    profile = snapshot.profile,
+    managesProfile = manageProfile(),
+    temp = snapshot.temp,
+  })
 end
 
 local function readTemp()
@@ -80,54 +95,94 @@ local function readTemp()
   snapshot.temp = milli and math.floor(milli / 1000 + 0.5) or nil
 end
 
-local function publish()
-  noctalia.state.set(SNAPSHOT, {
-    available = snapshot.available,
-    mode = snapshot.mode,
-    temp = snapshot.temp,
-  })
+local readingProfile = false
+-- Bumped on every preset change: a read started before it reports the old
+-- profile, so its result is dropped.
+local profileGen = 0
+
+-- The profile can also change from outside (Noctalia's own power profile
+-- widget, powerprofilesctl), so it's polled; the widget then shows when it
+-- no longer matches the preset.
+local function readProfile()
+  if readingProfile or not manageProfile() then
+    return
+  end
+  readingProfile = true
+  local gen = profileGen
+  local launched = noctalia.runAsync({ "powerprofilesctl", "get" }, function(res)
+    readingProfile = false
+    if gen ~= profileGen then
+      return
+    end
+    local out = res.exitCode == 0 and noctalia.string.trim(res.stdout or "") or ""
+    snapshot.profile = out ~= "" and out or nil
+    publish()
+  end)
+  if not launched then
+    readingProfile = false
+  end
 end
 
-local function applyMode(value, quiet)
-  if not attrPath or not modes.find(value) then
-    return false
+local function applyPreset(key, quiet)
+  local p = presets.find(key)
+  if not attrPath or not p then
+    return
   end
-  local ok, err = noctalia.writeFile(attrPath, tostring(value))
+
+  local ok, err = noctalia.writeFile(attrPath, tostring(p.fan))
   if not ok then
     noctalia.log("fan_mode write failed: " .. tostring(err))
     noctalia.notifyError(noctalia.tr("title"), noctalia.tr("error.write_failed", { path = attrPath }))
-    return false
+    return
   end
-  snapshot.mode = value
-  saveMode(value)
+  snapshot.preset = key
+  savePreset(key)
+
+  if manageProfile() then
+    snapshot.profile = p.profile -- optimistic; confirmed by the next read
+    profileGen += 1
+    noctalia.runAsync({ "powerprofilesctl", "set", p.profile }, function(res)
+      if res.exitCode ~= 0 then
+        noctalia.log("powerprofilesctl set failed: " .. (res.stderr or ""))
+        noctalia.notifyError(noctalia.tr("title"), noctalia.tr("error.profile_failed", { profile = p.profile }))
+      end
+      readProfile()
+    end)
+  end
+
   publish()
   if not quiet then
-    noctalia.notify(noctalia.tr("title"), noctalia.tr("mode." .. modes.find(value).key))
+    noctalia.notify(noctalia.tr("title"), noctalia.tr("preset." .. key))
   end
-  return true
 end
 
 noctalia.state.watch(COMMAND, function(cmd)
   if type(cmd) ~= "table" or cmd.action ~= "set" then
     return
   end
-  applyMode(tonumber(cmd.value))
+  applyPreset(cmd.preset)
 end)
 
 function update()
   readTemp()
+  readProfile()
   publish()
 end
 
-function onConfigChanged() end
+function onConfigChanged()
+  readProfile()
+  publish()
+end
 
 snapshot.available = attrPath ~= nil
-snapshot.mode = loadSavedMode()
+snapshot.preset = loadSavedPreset()
 readTemp()
 publish()
 
-if snapshot.mode and noctalia.getConfig("restore_on_start") ~= false then
-  applyMode(snapshot.mode, true)
+if snapshot.preset and noctalia.getConfig("restore_on_start") ~= false then
+  applyPreset(snapshot.preset, true)
+else
+  readProfile()
 end
 
 noctalia.setUpdateInterval(POLL_MS)

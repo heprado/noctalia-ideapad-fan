@@ -1,30 +1,36 @@
 # noctalia-ideapad-fan
 
-A [Noctalia](https://github.com/noctalia-dev/noctalia) bar widget that switches the **Lenovo IdeaPad firmware fan
-mode** through the `ideapad_acpi` driver's `fan_mode` attribute: the same setting Lenovo Vantage changes on Windows.
+A [Noctalia](https://github.com/noctalia-dev/noctalia) bar widget with **quiet / normal / game presets** for Lenovo
+IdeaPads. Each preset sets the **firmware fan mode** (the `ideapad_acpi` driver's `fan_mode`, the same setting Lenovo
+Vantage changes on Windows) together with the **power profile** (power-profiles-daemon, which drives the firmware
+`platform_profile` and the CPU's energy preference). The fan and how much heat CPU/GPU may make change together.
 
-| Mode        | `fan_mode` |
-| ----------- | ---------- |
-| Quiet       | 0          |
-| Standard    | 1          |
-| Max cooling | 4          |
+| Preset | Fan (`fan_mode`)   | Power profile |
+| ------ | ------------------ | ------------- |
+| Quiet  | Quiet (0)          | power-saver   |
+| Normal | Standard (1)       | balanced      |
+| Game   | Max cooling (4)    | performance   |
 
-- **Click** steps to the next mode (standard → max cooling → quiet), **right click** steps back.
-- The tooltip shows the mode and the CPU package temperature.
-- The last mode is saved and reapplied when Noctalia starts, since the firmware resets it on boot (setting
-  *Restore mode on start*).
+- **Click** steps to the next preset (normal → game → quiet), **right click** steps back.
+- The tooltip shows the preset, fan mode, power profile and CPU package temperature.
+- If the power profile is changed elsewhere (Noctalia's power profile widget, `powerprofilesctl`), the widget shows
+  **Custom**.
+- The last preset is saved and reapplied when Noctalia starts, since the firmware resets the fan mode on boot
+  (setting *Restore preset on start*).
+- Setting *Change the power profile* off (or no `powerprofilesctl`): presets only change the fan mode.
 
 Reading `fan_mode` back isn't reliable on every model (an IdeaPad Gaming 3 15IMH05 reports codes like `133` and `3`),
-so the widget shows the last mode it set rather than parsing the attribute.
+so the widget shows the last preset it applied rather than parsing the attribute. `fan_mode` 2 ("dust cleaning", a
+short full-speed cycle) and 3 (rejected by the driver) aren't used.
 
 ## Layout
 
 ```
 ideapad-fan/
   plugin.toml
-  service.luau        the only writer: applies, saves and restores the mode, polls the CPU temperature
-  widget.luau         the bar widget; asks the service for a mode through noctalia.state
-  lib/modes.luau      the mode table and click cycle
+  service.luau        the only writer: applies, saves and restores the preset, polls profile and CPU temperature
+  widget.luau         the bar widget; asks the service for a preset through noctalia.state
+  lib/presets.luau    the preset table and click cycle
   translations/       en, pt-BR
 nix/
   nixos-module.nix    udev rule + group so fan_mode is writable without root

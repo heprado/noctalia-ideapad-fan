@@ -1,28 +1,46 @@
 {
-  "title": "Ventoinha",
-  "mode": {
-    "quiet": "Silencioso",
-    "standard": "Padrão",
-    "max": "Máximo",
+  "title": "Ventoinha e energia",
+  "preset": {
+    "quiet": "Silêncio",
+    "normal": "Normal",
+    "game": "Jogo",
+    "custom": "Personalizado",
     "unknown": "Firmware"
   },
+  "fan": {
+    "0": "Silenciosa",
+    "1": "Padrão",
+    "4": "Máxima"
+  },
+  "profile": {
+    "power-saver": "Economia",
+    "balanced": "Equilibrado",
+    "performance": "Desempenho"
+  },
   "tooltip": {
-    "mode": "Modo",
+    "preset": "Preset",
+    "fan": "Ventoinha",
+    "profile": "Perfil de energia",
     "cpu_temp": "CPU",
-    "hint": "Clique: próximo modo · Botão direito: anterior"
+    "hint": "Clique: próximo preset · Botão direito: anterior"
   },
   "error": {
     "not_found": "fan_mode do ideapad_acpi não encontrado (não é um Lenovo IdeaPad, ou o módulo ideapad_laptop não está carregado).",
-    "write_failed": "Não foi possível escrever em {path}. Libere a escrita para o seu usuário (veja o README do plugin: módulo NixOS ou regra udev) e entre na sessão de novo."
+    "write_failed": "Não foi possível escrever em {path}. Libere a escrita para o seu usuário (veja o README do plugin: módulo NixOS ou regra udev) e entre na sessão de novo.",
+    "profile_failed": "Não foi possível mudar o perfil de energia para {profile} (o power-profiles-daemon está rodando?)."
   },
   "settings": {
     "show_label": {
-      "label": "Mostrar nome do modo",
-      "description": "Mostra o nome do modo ao lado do ícone em barras horizontais."
+      "label": "Mostrar nome do preset",
+      "description": "Mostra o nome do preset ao lado do ícone em barras horizontais."
+    },
+    "manage_power_profile": {
+      "label": "Mudar o perfil de energia",
+      "description": "Os presets também trocam o perfil do power-profiles-daemon (economia / equilibrado / desempenho). Desligado: mudam só a ventoinha."
     },
     "restore_on_start": {
-      "label": "Restaurar modo ao iniciar",
-      "description": "Reaplica o último modo escolhido quando o Noctalia inicia, já que o firmware o reseta no boot."
+      "label": "Restaurar preset ao iniciar",
+      "description": "Reaplica o último preset escolhido quando o Noctalia inicia, já que o firmware reseta o modo da ventoinha no boot."
     }
   }
 }
