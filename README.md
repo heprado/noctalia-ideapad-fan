@@ -27,11 +27,13 @@ short full-speed cycle) and 3 (rejected by the driver) aren't used.
 
 Even max cooling (`fan_mode` 4) follows the EC's own curve, so under a spiky load the fans keep switching on and off.
 Lenovo's GameZone WMI interface (GUID `887B54E3-DDDC-4B2C-8B88-68A26A8835D0`) has a `SetFanCooling` method (id `0x0D`)
-that runs both fans at full speed: on an IdeaPad Gaming 3 15IMH05 they go from ~2800/2600 to ~6000/5000 RPM. Left
-alone it dips them every ~11 s (about 1.5 s down to ~2300 RPM); re-sending it every 2 s restarts that cycle before the
-dip. The NixOS module's `fullSpeed` option wraps that loop in a root unit, `ideapad-fan-full-speed.service` (through
+that pins both fans at full speed: on an IdeaPad Gaming 3 15IMH05 they go from ~2800/2600 to ~6000/5000 RPM and
+stay there. The NixOS module's `fullSpeed` option wraps it in a root unit, `ideapad-fan-full-speed.service` (through
 `acpi_call`), and a polkit rule lets the `ideapad-fan` group start and stop only that unit. When the unit exists, the
 game preset starts it and the other presets stop it (setting *Full speed fans in game*).
+
+Writing `fan_mode` (any value) puts the 15IMH05's EC into about two minutes of dipping the fans every ~11 s (about
+1.5 s down to ~2300 RPM), even with `SetFanCooling` on, so with full speed the game preset doesn't write `fan_mode`.
 
 Check the firmware first: in the decompiled DSDT, the GameZone device's `WMAA` method should handle `Arg1 == 0x0D`
 with an EC command (`NCMD (0x59, 0x77)` / `0x76` on the 15IMH05). If the method lives elsewhere than `\_SB.GZFD.WMAA`,

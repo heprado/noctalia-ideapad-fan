@@ -15,8 +15,8 @@
 --
 -- fullSpeed: fan_mode 4 still follows the EC's curve, so under a spiky load
 -- the fan keeps switching on and off. Where the NixOS module's full-speed
--- unit is installed, the game preset also starts it (both fans pinned at
--- full speed) and the others stop it.
+-- unit is installed, the game preset starts it (both fans pinned at full
+-- speed) instead of writing fan_mode, and the others stop it.
 
 local M = {}
 

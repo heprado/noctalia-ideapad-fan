@@ -162,18 +162,23 @@ local function applyPreset(key, quiet)
     return
   end
 
-  local ok, err = noctalia.writeFile(attrPath, tostring(p.fan))
-  if not ok then
-    noctalia.log("fan_mode write failed: " .. tostring(err))
-    noctalia.notifyError(noctalia.tr("title"), noctalia.tr("error.write_failed", { path = attrPath }))
-    return
+  -- Any fan_mode write puts the EC (15IMH05) into ~2 minutes of dipping the
+  -- fans every ~11 s, even with SetFanCooling on, so a full-speed preset
+  -- leaves fan_mode alone.
+  local fullSpeed = manageFullSpeed() and p.fullSpeed == true
+  if not fullSpeed then
+    local ok, err = noctalia.writeFile(attrPath, tostring(p.fan))
+    if not ok then
+      noctalia.log("fan_mode write failed: " .. tostring(err))
+      noctalia.notifyError(noctalia.tr("title"), noctalia.tr("error.write_failed", { path = attrPath }))
+      return
+    end
   end
   snapshot.preset = key
   savePreset(key)
 
-  -- After fan_mode, so the firmware's mode change can't undo it.
   if manageFullSpeed() then
-    setFullSpeed(p.fullSpeed == true)
+    setFullSpeed(fullSpeed)
   end
 
   if manageProfile() then

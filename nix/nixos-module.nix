@@ -8,11 +8,9 @@
 #
 # fullSpeed: even fan_mode 4 follows the EC's own curve, so the fan keeps
 # switching on and off under a spiky load. Lenovo's GameZone WMI method
-# SetFanCooling (0x0D) runs both fans at full speed instead, but left alone
-# it dips them every ~11 s (about 1.5 s down to ~2300 RPM), so the unit
-# re-sends it every 2 s, which restarts that cycle before the dip. It is
-# reached through acpi_call by a root unit, and polkit lets the group start
-# and stop only that unit, not run arbitrary ACPI methods.
+# SetFanCooling (0x0D) pins both fans at full speed instead. It is reached
+# through acpi_call by a root unit, and polkit lets the group start and stop
+# only that unit, not run arbitrary ACPI methods.
 {
   config,
   lib,
@@ -25,26 +23,16 @@ let
   attr = "/sys%p/fan_mode";
   unit = "ideapad-fan-full-speed.service";
 
-  # $1: 1 = full speed, re-sent until the unit stops; 0 = back to the
-  # firmware curve.
+  # $1: 1 = full speed, 0 = back to the firmware curve.
   setFullSpeed = pkgs.writeShellScript "ideapad-fan-full-speed" ''
-    set_cooling() {
-      printf '%s 0 0x0D %s' ${lib.escapeShellArg cfg.fullSpeed.acpiMethod} "$1" > /proc/acpi/call
-      result=$(${pkgs.coreutils}/bin/tr -d '\0' < /proc/acpi/call)
-      case $result in
-        Error*)
-          echo "$result" >&2
-          exit 1
-          ;;
-      esac
-    }
-
-    set_cooling "$1"
-    if [ "$1" = 1 ]; then
-      while ${pkgs.coreutils}/bin/sleep 2; do
-        set_cooling 1
-      done
-    fi
+    printf '%s 0 0x0D %s' ${lib.escapeShellArg cfg.fullSpeed.acpiMethod} "$1" > /proc/acpi/call
+    result=$(${pkgs.coreutils}/bin/tr -d '\0' < /proc/acpi/call)
+    case $result in
+      Error*)
+        echo "$result" >&2
+        exit 1
+        ;;
+    esac
   '';
 in
 {
@@ -100,8 +88,10 @@ in
           description = "Lenovo GameZone fans at full speed";
           after = [ "systemd-modules-load.service" ];
           serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
             ExecStart = "${setFullSpeed} 1";
-            ExecStopPost = "${setFullSpeed} 0";
+            ExecStop = "${setFullSpeed} 0";
           };
         };
 
