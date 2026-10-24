@@ -1,0 +1,28 @@
+{
+  "title": "Ventoinha",
+  "mode": {
+    "quiet": "Silencioso",
+    "standard": "Padrão",
+    "max": "Máximo",
+    "unknown": "Firmware"
+  },
+  "tooltip": {
+    "mode": "Modo",
+    "cpu_temp": "CPU",
+    "hint": "Clique: próximo modo · Botão direito: anterior"
+  },
+  "error": {
+    "not_found": "fan_mode do ideapad_acpi não encontrado (não é um Lenovo IdeaPad, ou o módulo ideapad_laptop não está carregado).",
+    "write_failed": "Não foi possível escrever em {path}. Libere a escrita para o seu usuário (veja o README do plugin: módulo NixOS ou regra udev) e entre na sessão de novo."
+  },
+  "settings": {
+    "show_label": {
+      "label": "Mostrar nome do modo",
+      "description": "Mostra o nome do modo ao lado do ícone em barras horizontais."
+    },
+    "restore_on_start": {
+      "label": "Restaurar modo ao iniciar",
+      "description": "Reaplica o último modo escolhido quando o Noctalia inicia, já que o firmware o reseta no boot."
+    }
+  }
+}

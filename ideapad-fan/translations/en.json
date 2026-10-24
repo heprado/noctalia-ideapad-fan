@@ -1,0 +1,28 @@
+{
+  "title": "Fan mode",
+  "mode": {
+    "quiet": "Quiet",
+    "standard": "Standard",
+    "max": "Max cooling",
+    "unknown": "Firmware"
+  },
+  "tooltip": {
+    "mode": "Mode",
+    "cpu_temp": "CPU",
+    "hint": "Click: next mode · Right click: previous"
+  },
+  "error": {
+    "not_found": "No ideapad_acpi fan_mode found (not a Lenovo IdeaPad, or the ideapad_laptop module isn't loaded).",
+    "write_failed": "Couldn't write {path}. Make it writable for your user (see the plugin's README: NixOS module or udev rule), then log in again."
+  },
+  "settings": {
+    "show_label": {
+      "label": "Show mode name",
+      "description": "Show the mode name next to the icon on horizontal bars."
+    },
+    "restore_on_start": {
+      "label": "Restore mode on start",
+      "description": "Reapply the last chosen mode when Noctalia starts, since the firmware resets it on boot."
+    }
+  }
+}
